@@ -2,8 +2,7 @@
 if [ -d "assets" ]; then
   rm -rf assets
 fi
-mkdir -p assets/png
-mkdir assets/unicode
+mkdir -p assets/{png,unicode}
 
 wget https://api.github.com/emojis -O _data.json
 
@@ -16,9 +15,9 @@ fid.close()
 
 fid = open('_urls', 'w')
 for key, value in data.items():
-    fid.write("wget {0} -O assets/png/{1}.png\n".format(value, key))
+    fid.write(f"wget {value} -O assets/png/{key}.png\n")
     unicode = value.split("/")[-1].split("?")[0]
-    fid.write("cp assets/png/{0}.png assets/unicode/{1}\n".format(key, unicode))
+    fid.write(f"cp assets/png/{key}.png assets/unicode/{unicode}\n")
 fid.close()
 EOF
 
