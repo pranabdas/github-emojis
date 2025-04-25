@@ -4,22 +4,15 @@ if [ -d "assets" ]; then
 fi
 mkdir -p assets/{png,unicode}
 
-wget https://api.github.com/emojis -O _data.json
+curl -s https://api.github.com/emojis | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while IFS='=' read -r name url; do
+  path=${url%%\?*}
+  unicode=${path##*/}
 
-python3 <<EOF
-import json
-
-fid = open('_data.json')
-data = json.load(fid)
-fid.close()
-
-fid = open('_urls', 'w')
-for key, value in data.items():
-    fid.write(f"wget {value} -O assets/png/{key}.png\n")
-    unicode = value.split("/")[-1].split("?")[0]
-    fid.write(f"cp assets/png/{key}.png assets/unicode/{unicode}\n")
-fid.close()
-EOF
-
-bash _urls
-rm _data.json _urls
+  echo "Downloading ${name} ($url)"
+  curl -so assets/png/${name}.png $url
+  if [[ $(file -b --mime-type assets/png/${name}.png) != "image/png" ]]; then
+    echo "Warning!!! assets/png/${name}.png IS NOT PNG IMAGE. Restoring previous version..."
+    git restore assets/png/${name}.png
+  fi
+  cp assets/png/${name}.png assets/unicode/$unicode
+done
